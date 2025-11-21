@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
 authors = [
-    {name = "ExtractAll Team"},
+    {name = "kzndotsh", email = "admin@kzn.sh"},
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -28,9 +28,9 @@ classifiers = [
 extractall = "extractall.main:main"
 
 [project.urls]
-Homepage = "https://github.com/extractall/extractall"
-Repository = "https://github.com/extractall/extractall"
-Issues = "https://github.com/extractall/extractall/issues"
+Homepage = "https://github.com/kzndotsh/extractall"
+Repository = "https://github.com/kzndotsh/extractall"
+Issues = "https://github.com/kzndotsh/extractall/issues"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
