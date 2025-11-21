@@ -72,7 +72,7 @@ class RepairStrategy(ExtractionStrategy):
         try:
             cmd = ['zip'] + flags + [str(source), '--out', str(output)]
             result = subprocess.run(
-                cmd, capture_output=True, text=True,
+                cmd, capture_output=True, text=True, encoding='utf-8', errors='replace',
                 timeout=self.config.repair_timeout
             )
             
@@ -91,7 +91,7 @@ class RepairStrategy(ExtractionStrategy):
             # RAR repair in place
             cmd = ['rar', 'r', str(archive_info.path)]
             result = subprocess.run(
-                cmd, capture_output=True, text=True,
+                cmd, capture_output=True, text=True, encoding='utf-8', errors='replace',
                 timeout=self.config.repair_timeout
             )
             
