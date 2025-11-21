@@ -6,8 +6,9 @@ from typing import List, Optional, Dict, Any
 import logging
 import tempfile
 
-from ..core.interfaces import ArchiveHandler
+from ..core.interfaces import ArchiveHandler, ExtractionResult
 from ..config.settings import ExtractionConfig
+from ..utils.progress_monitor import ProgressMonitor
 
 
 class BaseArchiveHandler(ArchiveHandler):
@@ -35,10 +36,17 @@ class BaseArchiveHandler(ArchiveHandler):
         """Extract the archive using multiple strategies."""
         extract_to.mkdir(parents=True, exist_ok=True)
         
+        # Set up progress monitoring
+        monitor = ProgressMonitor(extract_to, self.config.stuck_timeout)
+        
         # Try each extraction command in order
         for cmd_template in self._get_extraction_commands():
-            if self._try_extraction_command(cmd_template, file_path, extract_to):
-                return True
+            monitor.start_monitoring()
+            try:
+                if self._try_extraction_command_with_monitoring(cmd_template, file_path, extract_to, monitor):
+                    return True
+            finally:
+                monitor.stop_monitoring()
         
         return False
     
@@ -62,34 +70,48 @@ class BaseArchiveHandler(ArchiveHandler):
         """Get magic numbers for this archive type."""
         return []
     
-    def _try_extraction_command(self, cmd_template: List[str], 
-                              file_path: Path, extract_to: Path) -> bool:
-        """Try a specific extraction command."""
+    def _try_extraction_command_with_monitoring(self, cmd_template: List[str], 
+                                              file_path: Path, extract_to: Path, 
+                                              monitor: ProgressMonitor) -> bool:
+        """Try extraction command with stuck detection."""
         try:
-            # Replace placeholders in command template
             cmd = self._build_command(cmd_template, file_path, extract_to)
-            
             self.logger.debug(f"Trying command: {' '.join(cmd)}")
             
-            result = subprocess.run(
+            process = subprocess.Popen(
                 cmd,
-                capture_output=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
                 text=True,
-                timeout=self.timeout,
                 cwd=extract_to
             )
             
-            success = result.returncode == 0
+            # Poll process while monitoring for stuck state
+            while process.poll() is None:
+                if monitor.is_stuck():
+                    self.logger.warning(f"Extraction appears stuck, terminating: {cmd[0]}")
+                    process.terminate()
+                    try:
+                        process.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        process.kill()
+                    raise subprocess.TimeoutExpired(cmd, monitor.stuck_timeout)
+                
+                import time
+                time.sleep(1)
+            
+            success = process.returncode == 0
             
             if success:
                 self.logger.debug(f"Extraction successful with: {cmd[0]}")
             else:
-                self.logger.debug(f"Extraction failed: {result.stderr}")
+                _, stderr = process.communicate()
+                self.logger.debug(f"Extraction failed: {stderr}")
             
             return success
             
         except subprocess.TimeoutExpired:
-            self.logger.debug(f"Extraction timeout with: {cmd_template[0]}")
+            self.logger.debug(f"Extraction stuck/timeout with: {cmd_template[0]}")
             return False
         except FileNotFoundError:
             self.logger.debug(f"Tool not found: {cmd_template[0]}")

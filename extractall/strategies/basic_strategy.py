@@ -3,6 +3,7 @@
 from pathlib import Path
 from typing import Optional
 import logging
+import subprocess
 
 from ..core.interfaces import ExtractionStrategy, ArchiveInfo, ExtractionResult
 from ..handlers.registry import create_handler_registry
@@ -34,6 +35,9 @@ class BasicExtractionStrategy(ExtractionStrategy):
             success = handler.extract(archive_info.path, extract_to)
             return ExtractionResult.SUCCESS if success else ExtractionResult.FAILED
             
+        except subprocess.TimeoutExpired:
+            self.logger.warning(f"Extraction stuck/timeout: {archive_info.path.name}")
+            return ExtractionResult.STUCK
         except Exception as e:
             self.logger.error(f"Handler extraction failed: {e}")
             return ExtractionResult.FAILED

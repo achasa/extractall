@@ -23,6 +23,7 @@ class ExtractionConfig:
     output_dir: str = "output"
     failed_dir: str = "failed"
     locked_dir: str = "locked"
+    stuck_dir: str = "stuck"
     
     # Extraction settings
     mode: ExtractionMode = ExtractionMode.STANDARD
@@ -39,6 +40,7 @@ class ExtractionConfig:
     # Timeouts
     strategy_timeout: int = 30
     repair_timeout: int = 60
+    stuck_timeout: int = 300  # 5 minutes without progress
     
     # Logging
     log_level: str = "INFO"
@@ -63,6 +65,7 @@ class ExtractionConfig:
             'output': self.input_dir / self.output_dir,
             'failed': self.input_dir / self.failed_dir,
             'locked': self.input_dir / self.locked_dir,
+            'stuck': self.input_dir / self.stuck_dir,
         }
     
     def get_strategy_config(self) -> Dict[str, Any]:

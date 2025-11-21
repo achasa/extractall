@@ -39,6 +39,10 @@ class DefaultFileManager(FileManager):
         """Move file to locked directory."""
         return self._move_file_safely(file_path, self.directories['locked'])
     
+    def move_to_stuck(self, file_path: Path) -> Path:
+        """Move file to stuck directory."""
+        return self._move_file_safely(file_path, self.directories['stuck'])
+    
     def get_unique_output_path(self, base_path: Path) -> Path:
         """Get unique path for output file to avoid conflicts."""
         if not base_path.exists():

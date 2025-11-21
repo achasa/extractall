@@ -42,6 +42,7 @@ class ExtractionOrchestrator:
             'failed': list(previous_results.get('failed', [])),
             'locked': list(previous_results.get('locked', [])),
             'partial': list(previous_results.get('partial', [])),
+            'stuck': list(previous_results.get('stuck', [])),
             'skipped': list(previous_results.get('skipped', []))
         }
         
@@ -290,6 +291,8 @@ class ExtractionOrchestrator:
                 self.file_manager.move_to_extracted(file_path)
             elif result == ExtractionResult.LOCKED:
                 self.file_manager.move_to_locked(file_path)
+            elif result == ExtractionResult.STUCK:
+                self.file_manager.move_to_stuck(file_path)
             else:  # FAILED or PARTIAL
                 self.file_manager.move_to_failed(file_path)
             
@@ -310,6 +313,7 @@ class ExtractionOrchestrator:
                 'failed': len(results['failed']),
                 'locked': len(results['locked']),
                 'partial': len(results['partial']),
+                'stuck': len(results['stuck']),
                 'skipped': len(results['skipped']),
                 'success_rate': (len(results['success']) / total_files * 100) if total_files > 0 else 0,
             },
@@ -325,6 +329,7 @@ class ExtractionOrchestrator:
         self.logger.info(f"Failed: {summary['failed']}")
         self.logger.info(f"Locked: {summary['locked']}")
         self.logger.info(f"Partial: {summary['partial']}")
+        self.logger.info(f"Stuck: {summary['stuck']}")
         self.logger.info(f"Success rate: {summary['success_rate']:.1f}%")
     
     def _process_nested_archives(self, temp_dir: Path) -> None:

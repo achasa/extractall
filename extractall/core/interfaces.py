@@ -12,6 +12,7 @@ class ExtractionResult(Enum):
     FAILED = "failed"
     LOCKED = "locked"
     PARTIAL = "partial"
+    STUCK = "stuck"
 
 
 class ArchiveInfo(Protocol):
@@ -98,6 +99,11 @@ class FileManager(ABC):
     @abstractmethod
     def move_to_locked(self, file_path: Path) -> Path:
         """Move file to locked directory."""
+        pass
+    
+    @abstractmethod
+    def move_to_stuck(self, file_path: Path) -> Path:
+        """Move file to stuck directory."""
         pass
     
     @abstractmethod
